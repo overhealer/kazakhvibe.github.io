@@ -296,7 +296,27 @@
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove('is-active'));
     screens[name].classList.add('is-active');
+    fitStage(true);
   }
+
+  /* ---- Всё помещается в экран: если блок выше окна — уменьшаем его целиком ---- */
+  const stageEl = document.querySelector('.stage'), innerEl = $('#stageInner');
+  function fitStage(instant) {
+    const cs = getComputedStyle(stageEl);
+    const availH = stageEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const availW = stageEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const h = innerEl.offsetHeight, w = innerEl.scrollWidth;
+    const k = Math.min(1, availH / h, availW / w);
+    if (instant) innerEl.style.transition = 'none';
+    innerEl.style.transform = k < 1 ? `scale(${k.toFixed(4)})` : '';
+    if (instant) { void innerEl.offsetWidth; innerEl.style.transition = ''; }
+  }
+  let fitRaf = 0;
+  const queueFit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(() => fitStage(false)); };
+  window.addEventListener('resize', queueFit);
+  if (window.visualViewport) visualViewport.addEventListener('resize', queueFit);
+  if ('ResizeObserver' in window) new ResizeObserver(queueFit).observe(innerEl);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitStage(true));
 
   const countNum = $('#countNum'), countWord = $('#countWord'), countStatus = $('#countStatus');
   const rLead = $('#rLead'), rNum = $('#rNum'), rUnit = $('#rUnit'), rIcons = $('#rIcons'), rComment = $('#rComment');
@@ -337,13 +357,28 @@
   }
 
   async function reveal(out) {
+    // Сначала раскладываем весь результат (скрытым), чтобы размер блока не менялся по ходу анимации
+    const s = out.score;
     rIcons.innerHTML = '';
     rComment.classList.remove('show');
-    rComment.textContent = '';
-    rNum.classList.remove('land', 'small');
-    rUnit.classList.remove('quote');
+    rNum.classList.remove('land');
+    rNum.classList.toggle('small', !!out.weird);
+    rUnit.classList.toggle('quote', !!out.weird);
     rLead.textContent = out.weird ? 'Вайбометр подумал и ответил:' : 'Сегодня казахский вайб на';
-    rUnit.textContent = '';
+    rUnit.textContent = out.weird ? `«${out.text}»` : out.text;
+    rUnit.style.visibility = 'hidden';
+    rComment.textContent = out.weird ? 'Вайбометр сегодня с характером. Спроси ещё раз.' : out.comment;
+    const icons = [];
+    if (!out.weird) {
+      for (let i = 0; i < Math.max(10, s); i++) {
+        const img = document.createElement('img');
+        img.src = IMG(out.unit.icon); img.alt = '';
+        if (i >= s) img.classList.add('off');
+        if (i >= 10) img.classList.add('bonus');
+        rIcons.appendChild(img); icons.push(img);
+      }
+    }
+    fitStage(true);
 
     // «Слот-машина» из цифр
     rNum.classList.add('spinning');
@@ -354,38 +389,23 @@
       await wait(30 + i * i * 1.1);
     }
     rNum.classList.remove('spinning');
+    rUnit.style.visibility = '';
 
-    const cx = innerWidth / 2, cy = rNum.getBoundingClientRect().top + rNum.offsetHeight / 2;
+    const cx = innerWidth / 2, cy = rNum.getBoundingClientRect().top + rNum.getBoundingClientRect().height / 2;
 
     if (out.weird) {
       rNum.textContent = '?';
-      rNum.classList.add('small');
       restartAnim(rNum, 'land');
-      rUnit.classList.add('quote');
-      rUnit.textContent = `«${out.text}»`;
       Sound.hmm();
       burst(10, cx, cy, ['tea', 'baursak', 'sheep'], 0.7);
       fav.text = '?';
       document.title = `?/10 · ${BASE_TITLE}`;
-      rComment.textContent = 'Вайбометр сегодня с характером. Спроси ещё раз.';
     } else {
-      const s = out.score;
       rNum.textContent = s;
       restartAnim(rNum, 'land');
-      rUnit.textContent = out.text;
       fav.text = String(s);
       document.title = `${s}/10 · ${BASE_TITLE}`;
-
-      // Ряд иконок
-      const total = Math.max(10, s);
-      for (let i = 0; i < total; i++) {
-        const img = document.createElement('img');
-        img.src = IMG(out.unit.icon); img.alt = '';
-        if (i >= s) img.classList.add('off');
-        if (i >= 10) img.classList.add('bonus');
-        rIcons.appendChild(img);
-        setTimeout(() => img.classList.add('show'), 120 + i * 70);
-      }
+      icons.forEach((img, i) => setTimeout(() => img.classList.add('show'), 120 + i * 70));
 
       if (s <= 2) {
         body.classList.add('gloomy');
@@ -405,7 +425,6 @@
           rain(4500, 3, null, false);
         }
       }
-      rComment.textContent = out.comment;
     }
 
     await wait(500);
