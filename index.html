@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Казахский Вайбометр</title>
+<meta name="description" content="Узнай, на сколько коней из 10 юрт сегодня казахский вайб.">
+<meta property="og:title" content="Казахский Вайбометр">
+<meta property="og:description" content="Сегодня казахский вайб на ? коней из 10 юрт. Проверь свой!">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#00AFCA">
+<link rel="icon" type="image/svg+xml" href="favicon.svg" id="favicon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <div class="sun"><svg id="sunRays" viewBox="-100 -100 200 200"></svg><div class="sun__disc"></div></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <img class="eagle-fly" src="assets/img/eagle.svg" alt="">
+</div>
+
+<svg class="steppe" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <path d="M0 170 L120 112 L200 140 L310 70 L420 135 L520 96 L640 150 L760 58 L880 130 L980 92 L1100 140 L1220 74 L1330 130 L1440 100 V260 H0Z" fill="#5f9dbd"/>
+  <g fill="#f4fbff">
+    <path d="M288 84 L310 70 L334 86 L320 82 L310 92 L299 82Z"/>
+    <path d="M736 74 L760 58 L786 76 L771 71 L760 82 L748 72Z"/>
+    <path d="M1197 88 L1220 74 L1244 90 L1230 85 L1220 95 L1209 86Z"/>
+  </g>
+  <path d="M0 192 Q180 160 360 186 T720 180 T1080 186 T1440 174 V260 H0Z" fill="#d9b552"/>
+  <image href="assets/img/yurt.svg" x="250" y="134" width="58" height="58"/>
+  <image href="assets/img/yurt.svg" x="300" y="148" width="42" height="42"/>
+  <image href="assets/img/yurt.svg" x="1060" y="136" width="54" height="54"/>
+  <image href="assets/img/yurt.svg" x="640" y="150" width="34" height="34"/>
+  <path d="M0 222 Q240 200 480 216 T960 212 T1440 206 V260 H0Z" fill="#b98f2e"/>
+</svg>
+<img class="horse-run" src="assets/img/horse.svg" alt="" aria-hidden="true">
+
+<div class="ornament" aria-hidden="true"></div>
+
+<button class="sound" id="soundBtn" type="button" aria-label="Выключить звук" title="Звук">🔊</button>
+
+<main class="stage">
+  <header class="title">
+    <p class="kicker">Ресми вайбометр степи · v1.0</p>
+    <h1>Казахский <span>Вайбометр</span></h1>
+  </header>
+
+  <section class="screen is-active" id="start">
+    <button class="vibe-btn" id="vibeBtn" type="button">
+      <span class="vibe-btn__label">Узнать казахский вайб</span>
+    </button>
+    <p class="hint">Нажми — и степь ответит. Ответ случайный, как погода в Астане.</p>
+  </section>
+
+  <section class="screen" id="count" aria-live="assertive">
+    <div class="shanyrak-wrap">
+      <img class="shanyrak" src="assets/img/shanyrak.svg" alt="">
+      <div class="count-num" id="countNum">3</div>
+    </div>
+    <p class="count-word" id="countWord">үш</p>
+    <p class="count-status" id="countStatus">Опрашиваем аташек…</p>
+  </section>
+
+  <section class="screen" id="result" aria-live="polite">
+    <div class="card" id="card">
+      <p class="r-lead" id="rLead">Сегодня казахский вайб на</p>
+      <div class="r-score" id="rNum">0</div>
+      <p class="r-unit" id="rUnit">коней из 10 юрт</p>
+      <div class="r-icons" id="rIcons"></div>
+      <p class="r-comment" id="rComment"></p>
+    </div>
+    <div class="actions">
+      <button class="btn-sec" id="againBtn" type="button">Ещё раз</button>
+      <button class="btn-sec ghost" id="shareBtn" type="button">Поделиться</button>
+    </div>
+  </section>
+</main>
+
+<div id="flash" aria-hidden="true"></div>
+<div id="fx" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<footer class="foot">Эмодзи: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a> (CC-BY 4.0) · Сделано с любовью к степи</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
