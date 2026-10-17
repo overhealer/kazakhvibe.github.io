@@ -2,7 +2,8 @@
   'use strict';
 
   const $ = (s) => document.querySelector(s);
-  const IMG = (n) => `assets/img/${n}.svg`;
+  const SVG_ASSETS = new Set(['flag', 'yurt', 'dombra', 'beshbarmak', 'kazy', 'baursak', 'shanyrak']);
+  const IMG = (n) => `assets/img/${n}.${SVG_ASSETS.has(n) ? 'svg' : 'png'}`;
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -10,7 +11,8 @@
 
   /* ================= Данные ================= */
 
-  const POOL = ['flag', 'flag', 'horse', 'horse', 'yurt', 'dombra', 'beshbarmak', 'kazy', 'baursak', 'eagle', 'sheep', 'tea', 'kumys', 'camel'];
+  const POOL = ['flag', 'flag', 'flag', 'horse', 'horse', 'yurt', 'dombra', 'dombra', 'beshbarmak', 'beshbarmak', 'kazy', 'baursak', 'baursak',
+    'eagle', 'ram', 'sheep', 'tea', 'teapot', 'kumys', 'camel', 'apple', 'tulip', 'flatbread', 'meat', 'crown'];
   POOL.forEach((n) => { const i = new Image(); i.src = IMG(n); });
 
   // forms: [на 1 …, на 2–4 …, на 5–0 …]
@@ -21,7 +23,10 @@
     { w: 1, forms: ['домбру', 'домбры', 'домбр'], of: 'аулов', icon: 'dombra' },
     { w: 1, forms: ['палку казы', 'палки казы', 'палок казы'], of: 'тоев', icon: 'kazy' },
     { w: 1, forms: ['беркута', 'беркута', 'беркутов'], of: 'вершин Алатау', icon: 'eagle' },
-    { w: 1, forms: ['барашка', 'барашка', 'барашков'], of: 'отар', icon: 'sheep' },
+    { w: 1, forms: ['барашка', 'барашка', 'барашков'], of: 'отар', icon: 'ram' },
+    { w: 1, forms: ['яблоко', 'яблока', 'яблок'], of: 'садов Алматы', icon: 'apple' },
+    { w: 1, forms: ['тюльпан', 'тюльпана', 'тюльпанов'], of: 'весенних степей', icon: 'tulip' },
+    { w: 1, forms: ['лепёшку', 'лепёшки', 'лепёшек'], of: 'тандыров', icon: 'flatbread' },
     { w: 1, forms: ['кесе чая', 'кесе чая', 'кесе чая'], of: 'самоваров', icon: 'tea' },
     { w: 1, forms: ['пиалу кумыса', 'пиалы кумыса', 'пиал кумыса'], of: 'торсыков', icon: 'kumys' },
     { w: 1, forms: ['верблюда', 'верблюда', 'верблюдов'], of: 'караванов', icon: 'camel' },
@@ -43,9 +48,9 @@
     ['Вайб пробил шанырак! Такого даже аташка не помнит.'],
   ];
 
-  // Как у Бин Бона: иногда ответ вообще не по теме
+  // Иногда вайбометр отвечает вообще не по теме
   const WEIRD = [
-    'Я Бин Бон. Я скучаю по жене.',
+    'Я скучаю по жене… и по бешбармаку.',
     'Не знаю… спроси у коня.',
     'Сначала чай с молоком, вайб потом.',
     'Ма-а-а-а-а-ожет быть…',
@@ -85,19 +90,25 @@
   /* ================= Звук (WebAudio, без файлов) ================= */
 
   const Sound = {
-    ctx: null, on: true, master: null,
+    ctx: null, on: true, master: null, volume: 80,
     init() {
       if (!this.ctx) {
         try {
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
           this.master = this.ctx.createGain();
-          this.master.gain.value = 0.7;
           this.master.connect(this.ctx.destination);
+          this.applyVolume();
         } catch (e) { this.ctx = null; }
       }
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     },
-    ok() { return this.on && this.ctx; },
+    // громкость 0–100 → усиление по квадрату (ухо слышит громкость логарифмически)
+    applyVolume() {
+      if (!this.master) return;
+      const g = this.on ? Math.pow(this.volume / 100, 2) : 0;
+      this.master.gain.setTargetAtTime(g, this.ctx.currentTime, 0.02);
+    },
+    ok() { return this.on && this.volume > 0 && this.ctx; },
     // Щипок струны (Karplus–Strong) — почти домбра
     pluck(freq, when = 0, vol = 0.5, dur = 1.6) {
       if (!this.ok()) return;
@@ -410,16 +421,45 @@
   $('#againBtn').addEventListener('click', run);
 
   const soundBtn = $('#soundBtn');
-  try { if (localStorage.getItem('kv-sound') === 'off') Sound.on = false; } catch (e) {}
+  const volEl = $('#volume');
+  try {
+    if (localStorage.getItem('kv-sound') === 'off') Sound.on = false;
+    const v = parseInt(localStorage.getItem('kv-volume'), 10);
+    if (!Number.isNaN(v)) Sound.volume = Math.min(100, Math.max(0, v));
+  } catch (e) {}
+  volEl.value = Sound.volume;
+
   const syncSound = () => {
-    soundBtn.textContent = Sound.on ? '🔊' : '🔇';
+    const silent = !Sound.on || Sound.volume === 0;
+    soundBtn.textContent = silent ? '🔇' : Sound.volume < 34 ? '🔈' : Sound.volume < 67 ? '🔉' : '🔊';
     soundBtn.setAttribute('aria-label', Sound.on ? 'Выключить звук' : 'Включить звук');
+    soundBtn.setAttribute('aria-pressed', String(!Sound.on));
+    volEl.style.setProperty('--v', (Sound.on ? Sound.volume : 0) + '%');
+    volEl.classList.toggle('is-muted', !Sound.on);
+    Sound.applyVolume();
   };
   syncSound();
+
   soundBtn.addEventListener('click', () => {
-    Sound.on = !Sound.on; syncSound();
-    try { localStorage.setItem('kv-sound', Sound.on ? 'on' : 'off'); } catch (e) {}
-    if (Sound.on) { Sound.init(); Sound.pluck(440, 0, 0.3); }
+    Sound.on = !Sound.on;
+    if (Sound.on && Sound.volume === 0) { Sound.volume = 50; volEl.value = 50; }
+    syncSound();
+    try { localStorage.setItem('kv-sound', Sound.on ? 'on' : 'off'); localStorage.setItem('kv-volume', Sound.volume); } catch (e) {}
+    if (Sound.on) { Sound.init(); Sound.applyVolume(); Sound.pluck(440, 0, 0.3); }
+  });
+
+  let previewT = 0;
+  volEl.addEventListener('input', () => {
+    Sound.volume = parseInt(volEl.value, 10);
+    Sound.on = Sound.volume > 0;  // двигаешь ползунок — звук включается
+    Sound.init();
+    syncSound();
+    // короткий «щипок» для пробы громкости, не чаще раза в 120 мс
+    const now = performance.now();
+    if (now - previewT > 120) { previewT = now; Sound.pluck(330 + Sound.volume * 3, 0, 0.3, 0.6); }
+  });
+  volEl.addEventListener('change', () => {
+    try { localStorage.setItem('kv-volume', Sound.volume); localStorage.setItem('kv-sound', Sound.on ? 'on' : 'off'); } catch (e) {}
   });
 
   const toastEl = $('#toast');
