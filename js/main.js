@@ -302,7 +302,7 @@
   const rLead = $('#rLead'), rNum = $('#rNum'), rUnit = $('#rUnit'), rIcons = $('#rIcons'), rComment = $('#rComment');
   const actions = document.querySelector('.actions'), flashEl = $('#flash'), body = document.body;
   const BASE_TITLE = 'Казахский Вайбометр';
-  let busy = false, lastShare = '';
+  let busy = false;
 
   function restartAnim(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 
@@ -368,7 +368,6 @@
       fav.text = '?';
       document.title = `?/10 · ${BASE_TITLE}`;
       rComment.textContent = 'Вайбометр сегодня с характером. Спроси ещё раз.';
-      lastShare = `Спросил у Казахского Вайбометра, а он ответил: «${out.text}»`;
     } else {
       const s = out.score;
       rNum.textContent = s;
@@ -376,7 +375,6 @@
       rUnit.textContent = out.text;
       fav.text = String(s);
       document.title = `${s}/10 · ${BASE_TITLE}`;
-      lastShare = `Сегодня казахский вайб на ${s} ${out.text}`;
 
       // Ряд иконок
       const total = Math.max(10, s);
@@ -421,7 +419,14 @@
   $('#againBtn').addEventListener('click', run);
 
   const soundBtn = $('#soundBtn');
-  const volEl = $('#volume');
+  const volEl = $('#volume'), volVal = $('#volVal'), soundBox = $('#soundBox');
+  // На тач-экранах наведения нет: первый тап открывает панель, следующие — мут
+  const noHover = window.matchMedia('(hover: none)').matches;
+  document.addEventListener('pointerdown', (e) => {
+    if (soundBox.contains(e.target)) return;
+    soundBox.classList.remove('open');
+    if (soundBox.contains(document.activeElement)) document.activeElement.blur();
+  });
   try {
     if (localStorage.getItem('kv-sound') === 'off') Sound.on = false;
     const v = parseInt(localStorage.getItem('kv-volume'), 10);
@@ -435,12 +440,14 @@
     soundBtn.setAttribute('aria-label', Sound.on ? 'Выключить звук' : 'Включить звук');
     soundBtn.setAttribute('aria-pressed', String(!Sound.on));
     volEl.style.setProperty('--v', (Sound.on ? Sound.volume : 0) + '%');
+    volVal.textContent = Sound.on ? Sound.volume + '%' : 'выкл';
     volEl.classList.toggle('is-muted', !Sound.on);
     Sound.applyVolume();
   };
   syncSound();
 
   soundBtn.addEventListener('click', () => {
+    if (noHover && !soundBox.classList.contains('open')) { soundBox.classList.add('open'); return; }
     Sound.on = !Sound.on;
     if (Sound.on && Sound.volume === 0) { Sound.volume = 50; volEl.value = 50; }
     syncSound();
@@ -460,23 +467,6 @@
   });
   volEl.addEventListener('change', () => {
     try { localStorage.setItem('kv-volume', Sound.volume); localStorage.setItem('kv-sound', Sound.on ? 'on' : 'off'); } catch (e) {}
-  });
-
-  const toastEl = $('#toast');
-  let toastT = 0;
-  function toast(msg) {
-    toastEl.textContent = msg; toastEl.classList.add('show');
-    clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2200);
-  }
-
-  $('#shareBtn').addEventListener('click', async () => {
-    const url = location.href.split('#')[0];
-    const text = `${lastShare} 🐎🇰🇿`;
-    if (navigator.share) {
-      try { await navigator.share({ title: BASE_TITLE, text, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
-    }
-    try { await navigator.clipboard.writeText(`${text}\n${url}`); toast('Скопировано! Кидай в чат 🐎'); }
-    catch (e) { toast(text); }
   });
 
   // Пробел / Enter на стартовом экране

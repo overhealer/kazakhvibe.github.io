@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -58,9 +58,12 @@
 
 <div class="ornament" aria-hidden="true"></div>
 
-<div class="sound" role="group" aria-label="Звук">
-  <button class="sound__btn" id="soundBtn" type="button" aria-label="Выключить звук" aria-pressed="false" title="Вкл/выкл звук">🔊</button>
-  <input class="sound__vol" id="volume" type="range" min="0" max="100" step="1" value="80" aria-label="Громкость" title="Громкость">
+<div class="sound" id="soundBox">
+  <button class="sound__btn" id="soundBtn" type="button" aria-label="Выключить звук" aria-pressed="false" aria-haspopup="true" title="Вкл/выкл звук">🔊</button>
+  <div class="sound__pop">
+    <input class="sound__vol" id="volume" type="range" min="0" max="100" step="1" value="80" aria-label="Громкость">
+    <span class="sound__val" id="volVal">80%</span>
+  </div>
 </div>
 
 <main class="stage">
@@ -95,17 +98,15 @@
     </div>
     <div class="actions">
       <button class="btn-sec" id="againBtn" type="button">Ещё раз</button>
-      <button class="btn-sec ghost" id="shareBtn" type="button">Поделиться</button>
     </div>
   </section>
 </main>
 
 <div id="flash" aria-hidden="true"></div>
 <div id="fx" aria-hidden="true"></div>
-<div class="toast" id="toast" role="status"></div>
 
 <footer class="foot">3D-эмодзи: <a href="https://github.com/microsoft/fluentui-emoji" target="_blank" rel="noopener">Microsoft Fluent Emoji</a> (MIT) · Сделано с любовью к степи</footer>
 
-<script src="js/main.js"></script>
+<script src="js/main.js?v=4"></script>
 </body>
 </html>
